@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+<title>file hash checker</title>
+</head>
+<body>
+
+<h2>file hash checker</h2>
+
+<input type="file" id="fileinput"><br><br>
+
+algorithm:
+<select id="algo">
+  <option value="sha256">sha-256</option>
+  <option value="sha1">sha-1</option>
+  <option value="md5">md5</option>
+  <option value="sha384">sha-384</option>
+  <option value="sha512">sha-512</option>
+</select>
+<button onclick="hashfile()">hash it</button>
+
+<p id="result">hash will show up here</p>
+
+<p>compare against a known hash:</p>
+<input type="text" id="compareinput" size="60">
+<p id="compareresult"></p>
+
+<script>
+async function hashfile() {
+  var fileinput = document.getElementById('fileinput');
+  var algo = document.getElementById('algo').value;
+
+  if (fileinput.files.length == 0) {
+    document.getElementById('result').innerHTML = 'pick a file first.';
+    return;
+  }
+
+  document.getElementById('result').innerHTML = 'hashing..';
+
+  var formdata = new FormData();
+  formdata.append('file', fileinput.files[0]);
+  formdata.append('algo', algo);
+
+  var res = await fetch('/hash', {method: 'post', body: formdata});
+  var data = await res.json();
+
+  if (data.error) {
+    document.getElementById('result').innerHTML = 'error: ' + data.error;
+    return;
+  }
+
+  document.getElementById('result').innerHTML = data.hash;
+  checkcompare();
+}
+
+function checkcompare() {
+  var compareinput = document.getElementById('compareinput').value.trim().toLowerCase();
+  var currenthash = document.getElementById('result').innerHTML.trim().toLowerCase();
+  var compareresult = document.getElementById('compareresult');
+
+  if (compareinput == '') {
+    compareresult.innerHTML = '';
+    return;
+  }
+
+  if (compareinput == currenthash) {
+    compareresult.innerHTML = 'match';
+  } else {
+    compareresult.innerHTML = 'no match';
+  }
+}
+
+document.getElementById('compareinput').onkeyup = checkcompare;
+</script>
+
+</body>
+</html>
